@@ -35,15 +35,11 @@ def prioritize():
     """
     
     while True:
-        while Message.objects.high_priority().count() or Message.objects.medium_priority().count():
-            while Message.objects.high_priority().count():
-                for message in Message.objects.high_priority().order_by("when_added"):
-                    yield message
-            while Message.objects.high_priority().count() == 0 and Message.objects.medium_priority().count():
-                yield Message.objects.medium_priority().order_by("when_added")[0]
-        while Message.objects.high_priority().count() == 0 and Message.objects.medium_priority().count() == 0 and Message.objects.low_priority().count():
-            yield Message.objects.low_priority().order_by("when_added")[0]
-        if Message.objects.non_deferred().count() == 0:
+        try:
+            yield Message.objects.non_deferred().order_by(
+                    "-priority", "when_added")[0]
+        except IndexError:
+            # the [0] ref was out of range, so we're done with messages
             break
 
 
