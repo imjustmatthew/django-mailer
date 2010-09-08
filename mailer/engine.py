@@ -7,6 +7,8 @@ from socket import error as socket_error
 
 from django.conf import settings
 from django.core.mail import send_mail as core_send_mail
+from django.db import transaction
+
 try:
     # Django 1.2
     from django.core.mail import get_connection
@@ -14,6 +16,7 @@ except ImportError:
     # ImportError: cannot import name get_connection
     from django.core.mail import SMTPConnection
     get_connection = lambda backend=None, fail_silently=False, **kwds: SMTPConnection(fail_silently=fail_silently)
+
 
 from mailer.models import Message, DontSendEntry, MessageLog
 
@@ -42,6 +45,25 @@ def prioritize():
             # the [0] ref was out of range, so we're done with messages
             break
 
+@transaction.commit_on_success
+def mark_as_sent(message):
+    """
+    Mark the given message as sent in the log and delete the original item.
+    """
+
+    MessageLog.objects.log(message, 1) # @@@ avoid using literal result code
+    message.delete()
+
+@transaction.commit_on_success
+def mark_as_deferred(message, err=None):
+    """
+    Mark the given message as deferred in the log and adjust the mail item
+    accordingly.
+    """
+
+    message.defer()
+    logging.info("message deferred due to failure: %s" % err)
+    MessageLog.objects.log(message, 3, log_message=str(err)) # @@@ avoid using literal result code
 
 def send_all():
     """
@@ -77,13 +99,10 @@ def send_all():
                 email = message.email
                 email.connection = connection
                 email.send()
-                MessageLog.objects.log(message, 1) # @@@ avoid using literal result code
-                message.delete()
+                mark_as_sent(message)
                 sent += 1
             except (socket_error, smtplib.SMTPSenderRefused, smtplib.SMTPRecipientsRefused, smtplib.SMTPAuthenticationError), err:
-                message.defer()
-                logging.info("message deferred due to failure: %s" % err)
-                MessageLog.objects.log(message, 3, log_message=str(err)) # @@@ avoid using literal result code
+                mark_as_deferred(message, err)
                 deferred += 1
                 # Get new connection, it case the connection itself has an error.
                 connection = None
