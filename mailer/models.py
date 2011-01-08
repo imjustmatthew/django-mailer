@@ -115,6 +115,14 @@ class Message(models.Model):
 set the attribute again to cause the underlying serialised data to be updated.""")
     
     @property
+    def from_address(self):
+        email = self.email
+        if email is not None:
+            return email.from_email
+        else:
+            return []
+    
+    @property
     def to_addresses(self):
         email = self.email
         if email is not None:
@@ -127,6 +135,14 @@ set the attribute again to cause the underlying serialised data to be updated.""
         email = self.email
         if email is not None:
             return email.subject
+        else:
+            return ""
+    
+    @property
+    def body(self):
+        email = self.email
+        if email is not None:
+            return email.body
         else:
             return ""
 
