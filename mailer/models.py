@@ -270,7 +270,7 @@ class MessageLog(models.Model):
     def to_addresses(self):
         email = self.email
         if email is not None:
-            return email.to
+            return u", ".join(email.to)
         else:
             return []
     
