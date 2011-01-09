@@ -126,7 +126,7 @@ set the attribute again to cause the underlying serialised data to be updated.""
     def to_addresses(self):
         email = self.email
         if email is not None:
-            return email.to
+            return u", ".join(email.to)
         else:
             return []
     
