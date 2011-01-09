@@ -2,16 +2,17 @@ import re
 
 from django import forms
 from django.core.mail import EmailMultiAlternatives
+from django.contrib.admin.widgets import AdminTextInputWidget, AdminTextareaWidget
 
 from mailer.models import Message, make_message
 
 
 class MessageForm(forms.ModelForm):
-    from_email = forms.CharField()
-    to = forms.CharField()
-    subject = forms.CharField()
-    body = forms.CharField(widget=forms.Textarea())
-    body_html = forms.CharField(required=False, widget=forms.Textarea())
+    from_email = forms.CharField(widget=AdminTextInputWidget())
+    to = forms.CharField(widget=AdminTextInputWidget())
+    subject = forms.CharField(widget=AdminTextInputWidget())
+    body = forms.CharField(widget=AdminTextareaWidget)
+    body_html = forms.CharField(required=False, widget=AdminTextareaWidget)
 
     def __init__(self, *args, **kwargs):
         instance = kwargs.get('instance')
@@ -46,4 +47,4 @@ class MessageForm(forms.ModelForm):
 
     class Meta:
         model = Message
-        fields = ('from_email', 'to', 'subject', 'body', 'when_added', 'priority')
+        fields = ('from_email', 'to', 'subject', 'body', 'body_html', 'when_added', 'priority')
