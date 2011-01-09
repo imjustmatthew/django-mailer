@@ -145,6 +145,16 @@ set the attribute again to cause the underlying serialised data to be updated.""
             return email.body
         else:
             return ""
+    
+    @property
+    def body_html(self):
+        email = self.email
+        try:
+            for alternative in email.alternatives:
+                if alternative[1] == 'text/html':
+                    return alternative[0]
+        except AttributeError:
+            return ""
 
 
 def filter_recipient_list(lst):

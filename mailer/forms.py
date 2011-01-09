@@ -1,6 +1,7 @@
 import re
 
 from django import forms
+from django.core.mail import EmailMultiAlternatives
 
 from mailer.models import Message, make_message
 
@@ -10,6 +11,7 @@ class MessageForm(forms.ModelForm):
     to = forms.CharField()
     subject = forms.CharField()
     body = forms.CharField(widget=forms.Textarea())
+    body_html = forms.CharField(required=False, widget=forms.Textarea())
 
     def __init__(self, *args, **kwargs):
         instance = kwargs.get('instance')
@@ -20,6 +22,7 @@ class MessageForm(forms.ModelForm):
             kwargs['initial']['to'] = instance.to_addresses
             kwargs['initial']['subject'] = instance.subject
             kwargs['initial']['body'] = instance.body
+            kwargs['initial']['body_html'] = instance.body_html
         return super(MessageForm, self).__init__(*args, **kwargs)
 
     def save(self, commit=True):
@@ -29,6 +32,14 @@ class MessageForm(forms.ModelForm):
                                 to=re.split(", *", self.cleaned_data['to']),
                                 subject=self.cleaned_data['subject'],
                                 body=self.cleaned_data['body'])
+
+        body_html = self.cleaned_data['body_html']
+        if body_html:
+            email = instance.email
+            email = EmailMultiAlternatives(email.subject, email.body, email.from_email, email.to)
+            email.attach_alternative(body_html, "text/html")
+            instance.email = email
+
         if commit:
             instance.save()
         return instance
