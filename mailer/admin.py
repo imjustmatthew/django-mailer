@@ -1,10 +1,12 @@
 from django.contrib import admin
 
 from mailer.models import Message, DontSendEntry, MessageLog
+from mailer.forms import MessageForm
 
 
 class MessageAdmin(admin.ModelAdmin):
     list_display = ["id", "to_addresses", "subject", "when_added", "priority"]
+    form = MessageForm
 
 
 class DontSendEntryAdmin(admin.ModelAdmin):
