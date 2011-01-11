@@ -37,7 +37,7 @@ def prioritize():
     while True:
         try:
             yield Message.objects.non_deferred().order_by(
-                    "-priority", "when_added")[0]
+                    "priority", "when_added")[0]
         except IndexError:
             # the [0] ref was out of range, so we're done with messages
             break
