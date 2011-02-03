@@ -28,11 +28,15 @@ PRIORITY_MAPPING = {
 
 
 def send_mail(subject, message, from_email, recipient_list, priority="medium",
-              fail_silently=False, auth_user=None, auth_password=None):
+              fail_silently=False, auth_user=None, auth_password=None, connection_kwargs=None):
     from django.utils.encoding import force_unicode
     from mailer.models import make_message
     
     priority = PRIORITY_MAPPING[priority]
+    if auth_user:
+        connection_kwargs["EMAIL_HOST_USER"] = auth_user
+    if auth_password:
+        connection_kwargs["EMAIL_HOST_PASSWORD"] = auth_password
     
     # need to do this in case subject used lazy version of ugettext
     subject = force_unicode(subject)
@@ -42,13 +46,14 @@ def send_mail(subject, message, from_email, recipient_list, priority="medium",
                  body=message,
                  from_email=from_email,
                  to=recipient_list,
-                 priority=priority).save()
+                 priority=priority,
+                 connection_kwargs=connection_kwargs).save()
     return 1
 
 
 def send_html_mail(subject, message, message_html, from_email, recipient_list,
                    priority="medium", fail_silently=False, auth_user=None,
-                   auth_password=None):
+                   auth_password=None, connection_kwargs=None):
     """
     Function to queue HTML e-mails
     """
@@ -57,6 +62,10 @@ def send_html_mail(subject, message, message_html, from_email, recipient_list,
     from mailer.models import make_message
     
     priority = PRIORITY_MAPPING[priority]
+    if auth_user:
+        connection_kwargs["EMAIL_HOST_USER"] = auth_user
+    if auth_password:
+        connection_kwargs["EMAIL_HOST_PASSWORD"] = auth_password
     
     # need to do this in case subject used lazy version of ugettext
     subject = force_unicode(subject)
@@ -66,7 +75,8 @@ def send_html_mail(subject, message, message_html, from_email, recipient_list,
                        body=message,
                        from_email=from_email,
                        to=recipient_list,
-                       priority=priority)
+                       priority=priority,
+                       connection_kwargs=connection_kwargs)
     email = msg.email
     email = EmailMultiAlternatives(email.subject, email.body, email.from_email, email.to)
     email.attach_alternative(message_html, "text/html")

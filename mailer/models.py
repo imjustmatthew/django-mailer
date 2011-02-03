@@ -62,12 +62,21 @@ class MessageManager(models.Manager):
 
 
 def email_to_db(email):
-    # pickle.dumps returns essentially binary data which we need to encode
-    # to store in a unicode field.
-    return base64.encodestring(pickle.dumps(email))
+    #For backwards compatibility with outside calls - object_to_db should be preferred.
+    return object_to_db(email)
 
 
 def db_to_email(data):
+    #For backwards compatibility with outside calls - db_to_object should be preferred.
+    return db_to_object(data)
+
+def object_to_db(thing):
+    # pickle.dumps returns essentially binary data which we need to encode
+    # to store in a unicode field.
+    return base64.encodestring(pickle.dumps(thing))
+
+
+def db_to_object(data):
     if data == u"":
         return None
     else:
@@ -80,13 +89,13 @@ def db_to_email(data):
             except Exception:
                 return None
 
-
 class Message(models.Model):
     
     # The actual data - a pickled EmailMessage
     message_data = models.TextField()
     when_added = models.DateTimeField(default=datetime.now)
     priority = models.CharField(max_length=1, choices=PRIORITIES, default="2")
+    connection_kwargs_data = models.TextField()
     # @@@ campaign?
     # @@@ content_type?
     
@@ -105,13 +114,24 @@ class Message(models.Model):
             return False
     
     def _get_email(self):
-        return db_to_email(self.message_data)
+        return db_to_object(self.message_data)
     
     def _set_email(self, val):
-        self.message_data = email_to_db(val)
+        self.message_data = object_to_db(val)
 
     email = property(_get_email, _set_email, doc=
                      """EmailMessage object. If this is mutated, you will need to
+set the attribute again to cause the underlying serialised data to be updated.""")
+    
+     def _get_connection_kwargs(self):
+        return db_to_object(self.connection_kwargs_data)
+    
+    def _set_connection_kwargs(self, val):
+        self.connection_kwargs_data = object_to_db(val)
+
+    connection_kwargs = property(_get_connection_kwargs, _set_connection_kwargs, doc=
+                     """Array of Tuples, used for creating a e-mail connection to 
+a backend. If this is mutated, you will need to
 set the attribute again to cause the underlying serialised data to be updated.""")
     
     @property
@@ -170,7 +190,8 @@ def filter_recipient_list(lst):
 
 
 def make_message(subject="", body="", from_email=None, to=None, bcc=None,
-                 attachments=None, headers=None, priority=None, db_msg=None):
+                 attachments=None, headers=None, priority=None, db_msg=None,
+                 connection_kwargs=None):
     """
     Creates a simple message for the email parameters supplied.
     The 'to' and 'bcc' lists are filtered using DontSendEntry.
@@ -188,6 +209,7 @@ def make_message(subject="", body="", from_email=None, to=None, bcc=None,
     if not db_msg:
         db_msg = Message(priority=priority)
     db_msg.email = core_msg
+    db_msg.connection_kwargs = connection_kwargs
     return db_msg
 
 
@@ -264,7 +286,7 @@ class MessageLog(models.Model):
     
     @property
     def email(self):
-        return db_to_email(self.message_data)
+        return db_to_object(self.message_data)
     
     @property
     def to_addresses(self):

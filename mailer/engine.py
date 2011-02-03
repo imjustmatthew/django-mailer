@@ -91,10 +91,18 @@ def send_all():
     
     try:
         connection = None
+        lastConnectionArgs = None
         for message in prioritize():
             try:
-                if connection is None:
-                    connection = get_connection(backend=EMAIL_BACKEND)
+                #Check to see if we can reuse the last connection - except the password (we assume they're the same if user is the same)
+                if (connection is None) or (lastConnectionArgs != message.connection_kwargs):
+                    #Connection doesn't exist or doesn't match, build it
+                    if message.connection_kwargs:
+                        connection = get_connection(backend=EMAIL_BACKEND, **message.connection_kwargs)
+                    else:
+                        connection = get_connection(backend=EMAIL_BACKEND)
+                    #save the new args - even if they're empty
+                    lastConnectionArgs = message.connection_kwargs
                 logging.info("sending message '%s' to %s" % (message.subject.encode("utf-8"), message.to_addresses.encode("utf-8")))
                 email = message.email
                 email.connection = connection
