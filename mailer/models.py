@@ -123,7 +123,7 @@ class Message(models.Model):
                      """EmailMessage object. If this is mutated, you will need to
 set the attribute again to cause the underlying serialised data to be updated.""")
     
-     def _get_connection_kwargs(self):
+    def _get_connection_kwargs(self):
         return db_to_object(self.connection_kwargs_data)
     
     def _set_connection_kwargs(self, val):
