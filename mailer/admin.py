@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from mailer.models import Message, DontSendEntry, MessageLog
-from mailer.forms import MessageForm
+from mailer.forms import MessageForm, MessageLogForm
 
 
 class MessageAdmin(admin.ModelAdmin):
@@ -15,6 +15,7 @@ class DontSendEntryAdmin(admin.ModelAdmin):
 
 class MessageLogAdmin(admin.ModelAdmin):
     list_display = ["id", "to_addresses", "subject", "when_attempted", "result"]
+    form = MessageLogForm
 
 
 admin.site.register(Message, MessageAdmin)

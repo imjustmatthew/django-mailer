@@ -89,30 +89,8 @@ def db_to_object(data):
             except Exception:
                 return None
 
-class Message(models.Model):
-    
-    # The actual data - a pickled EmailMessage
-    message_data = models.TextField()
-    when_added = models.DateTimeField(default=datetime.now)
-    priority = models.CharField(max_length=1, choices=PRIORITIES, default="2")
-    connection_kwargs_data = models.TextField()
-    # @@@ campaign?
-    # @@@ content_type?
-    
-    objects = MessageManager()
-    
-    def defer(self):
-        self.priority = "4"
-        self.save()
-    
-    def retry(self, new_priority=2):
-        if self.priority == "4":
-            self.priority = new_priority
-            self.save()
-            return True
-        else:
-            return False
-    
+
+class MessageDataModel(models.Model):
     def _get_email(self):
         return db_to_object(self.message_data)
     
@@ -121,17 +99,6 @@ class Message(models.Model):
 
     email = property(_get_email, _set_email, doc=
                      """EmailMessage object. If this is mutated, you will need to
-set the attribute again to cause the underlying serialised data to be updated.""")
-    
-    def _get_connection_kwargs(self):
-        return db_to_object(self.connection_kwargs_data)
-    
-    def _set_connection_kwargs(self, val):
-        self.connection_kwargs_data = object_to_db(val)
-
-    connection_kwargs = property(_get_connection_kwargs, _set_connection_kwargs, doc=
-                     """Array of Tuples, used for creating a e-mail connection to 
-a backend. If this is mutated, you will need to
 set the attribute again to cause the underlying serialised data to be updated.""")
     
     @property
@@ -175,6 +142,45 @@ set the attribute again to cause the underlying serialised data to be updated.""
                     return alternative[0]
         except AttributeError:
             return ""
+    
+    class Meta:
+        abstract = True
+
+
+class Message(MessageDataModel):
+    
+    # The actual data - a pickled EmailMessage
+    message_data = models.TextField()
+    when_added = models.DateTimeField(default=datetime.now)
+    priority = models.CharField(max_length=1, choices=PRIORITIES, default="2")
+    connection_kwargs_data = models.TextField()
+    # @@@ campaign?
+    # @@@ content_type?
+    
+    objects = MessageManager()
+    
+    def defer(self):
+        self.priority = "4"
+        self.save()
+    
+    def retry(self, new_priority=2):
+        if self.priority == "4":
+            self.priority = new_priority
+            self.save()
+            return True
+        else:
+            return False
+    
+    def _get_connection_kwargs(self):
+        return db_to_object(self.connection_kwargs_data)
+    
+    def _set_connection_kwargs(self, val):
+        self.connection_kwargs_data = object_to_db(val)
+
+    connection_kwargs = property(_get_connection_kwargs, _set_connection_kwargs, doc=
+                     """Array of Tuples, used for creating a e-mail connection to 
+a backend. If this is mutated, you will need to
+set the attribute again to cause the underlying serialised data to be updated.""")
 
 
 def filter_recipient_list(lst):
@@ -269,7 +275,7 @@ class MessageLogManager(models.Manager):
         )
 
 
-class MessageLog(models.Model):
+class MessageLog(MessageDataModel):
     
     # fields from Message
     message_data = models.TextField()
@@ -283,23 +289,3 @@ class MessageLog(models.Model):
     log_message = models.TextField()
     
     objects = MessageLogManager()
-    
-    @property
-    def email(self):
-        return db_to_object(self.message_data)
-    
-    @property
-    def to_addresses(self):
-        email = self.email
-        if email is not None:
-            return u", ".join(email.to)
-        else:
-            return []
-    
-    @property
-    def subject(self):
-        email = self.email
-        if email is not None:
-            return email.subject
-        else:
-            return ""

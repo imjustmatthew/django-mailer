@@ -7,7 +7,7 @@ from django.contrib.admin.widgets import AdminTextInputWidget, AdminTextareaWidg
 from mailer.models import Message, make_message
 
 
-class MessageForm(forms.ModelForm):
+class MessageDataForm(forms.ModelForm):
     from_email = forms.CharField(widget=AdminTextInputWidget())
     to = forms.CharField(widget=AdminTextInputWidget())
     subject = forms.CharField(widget=AdminTextInputWidget())
@@ -24,8 +24,10 @@ class MessageForm(forms.ModelForm):
             kwargs['initial']['subject'] = instance.subject
             kwargs['initial']['body'] = instance.body
             kwargs['initial']['body_html'] = instance.body_html
-        return super(MessageForm, self).__init__(*args, **kwargs)
+        return super(MessageDataForm, self).__init__(*args, **kwargs)
 
+
+class MessageForm(MessageDataForm):
     def save(self, commit=True):
         instance = super(MessageForm, self).save(commit=False)
         instance = make_message(db_msg=instance,
@@ -48,3 +50,10 @@ class MessageForm(forms.ModelForm):
     class Meta:
         model = Message
         fields = ('from_email', 'to', 'subject', 'body', 'body_html', 'when_added', 'priority')
+
+
+class MessageLogForm(MessageDataForm):
+    class Meta:
+        model = Message
+        fields = ('from_email', 'to', 'subject', 'body', 'body_html',
+                'when_added', 'priority', 'when_attempted', 'result', 'log_message')
