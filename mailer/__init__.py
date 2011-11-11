@@ -33,6 +33,8 @@ def send_mail(subject, message, from_email, recipient_list, priority="medium",
     from mailer.models import make_message
     
     priority = PRIORITY_MAPPING[priority]
+    if not connection_kwargs:
+        connection_kwargs = {}
     if auth_user:
         connection_kwargs["EMAIL_HOST_USER"] = auth_user
     if auth_password:
@@ -62,6 +64,8 @@ def send_html_mail(subject, message, message_html, from_email, recipient_list,
     from mailer.models import make_message
     
     priority = PRIORITY_MAPPING[priority]
+    if not connection_kwargs:
+        connection_kwargs = {}
     if auth_user:
         connection_kwargs["EMAIL_HOST_USER"] = auth_user
     if auth_password:
