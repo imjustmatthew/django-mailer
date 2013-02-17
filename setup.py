@@ -13,6 +13,7 @@ setup(
         "mailer",
         "mailer.management",
         "mailer.management.commands",
+        "mailer.migrations",
     ],
     package_dir={"mailer": "mailer"},
     classifiers=[
