@@ -151,7 +151,7 @@ class Message(MessageDataModel):
     
     # The actual data - a pickled EmailMessage
     message_data = models.TextField()
-    when_added = models.DateTimeField(default=datetime.now)
+    when_added = models.DateTimeField(auto_now_add=True)
     priority = models.CharField(max_length=1, choices=PRIORITIES, default="2")
     connection_kwargs_data = models.TextField()
     # @@@ campaign?
@@ -238,7 +238,7 @@ class DontSendEntryManager(models.Manager):
 class DontSendEntry(models.Model):
     
     to_address = models.EmailField()
-    when_added = models.DateTimeField()
+    when_added = models.DateTimeField(auto_now_add=True)
     # @@@ who added?
     # @@@ comment field?
     
@@ -279,12 +279,12 @@ class MessageLog(MessageDataModel):
     
     # fields from Message
     message_data = models.TextField()
-    when_added = models.DateTimeField()
+    when_added = models.DateTimeField(auto_now_add=True)
     priority = models.CharField(max_length=1, choices=PRIORITIES)
     # @@@ campaign?
     
     # additional logging fields
-    when_attempted = models.DateTimeField(default=datetime.now)
+    when_attempted = models.DateTimeField(auto_now=True)
     result = models.CharField(max_length=1, choices=RESULT_CODES)
     log_message = models.TextField()
     
