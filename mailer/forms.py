@@ -47,4 +47,4 @@ class MessageForm(forms.ModelForm):
 
     class Meta:
         model = Message
-        fields = ('from_email', 'to', 'subject', 'body', 'body_html', 'when_added', 'priority')
+        fields = ('from_email', 'to', 'subject', 'body', 'body_html', 'priority')
